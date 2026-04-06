@@ -152,11 +152,24 @@ const Calendar = () => {
     const { workers, shifts, addShift, updateShift, deleteShift, importLegacy, addWorker, updateWorker, deleteWorker, business } = useStore()
     const { logout } = useAuth()
     const [selectedWeek, setSelectedWeek] = useState(new Date())
+    const [viewMode, setViewMode] = useState('7') // '7', '3', '1'
+    const [mobileMenu, setMobileMenu] = useState(false)
     const [modal, setModal] = useState(null)
     const [editW, setEditW] = useState(null)
 
     const wStart = startOfWeek(selectedWeek, { weekStartsOn: 1 })
-    const days = eachDayOfInterval({ start: wStart, end: addDays(wStart, 6) })
+    const allDays = eachDayOfInterval({ start: wStart, end: addDays(wStart, 6) })
+    
+    const days = useMemo(() => {
+        if (viewMode === '1') return [selectedWeek]
+        if (viewMode === '3') {
+            const idx = allDays.findIndex(d => isSameDay(d, selectedWeek))
+            const startIdx = idx === -1 ? 0 : idx
+            return allDays.slice(startIdx, Math.min(startIdx + 3, allDays.length))
+        }
+        return allDays
+    }, [viewMode, selectedWeek, allDays])
+
     const hours = useMemo(()=>Array.from({length: 28}, (_, i)=> {
       const h = Math.floor(i/2) + 6
       const m = i%2 === 0 ? '00' : '30'
@@ -164,6 +177,13 @@ const Calendar = () => {
     }), [])
 
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+    useEffect(() => {
+        const h = () => setWindowWidth(window.innerWidth)
+        window.addEventListener('resize', h)
+        return () => window.removeEventListener('resize', h)
+    }, [])
 
     const exportPDF = () => {
         const el = document.getElementById('calendar-view')
@@ -174,23 +194,32 @@ const Calendar = () => {
     const calcHours = (id) => shifts.filter(s=>s.workerId===id).reduce((t,s)=>(t+(new Date(s.end)-new Date(s.start))/3600000),0)
 
     return (
-        <div style={{ display: 'flex', height: '100vh', width: '100vw', background: '#fcfcfc' }}>
-            <aside style={DASHBOARD_UI_STYLE.aside}>
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                   <div style={{ width: '32px', height: '32px', background: '#000', borderRadius: '8px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{business?.name?.[0]}</div>
-                   <div style={{ fontWeight: 700 }}>{business?.name || 'MakSchichten'}</div>
+        <div style={{ display: 'flex', height: '100vh', width: '100vw', background: '#fcfcfc', overflow: 'hidden' }}>
+            <aside style={{ 
+                ...DASHBOARD_UI_STYLE.aside,
+                display: (window.innerWidth < 768 && !mobileMenu) ? 'none' : 'flex',
+                position: (window.innerWidth < 768) ? 'fixed' : 'relative',
+                zIndex: 1000, height: '100vh', width: (window.innerWidth < 768) ? '100vw' : '280px',
+                transition: 'all 0.3s'
+            }}>
+                <div style={{ padding: '1.5rem', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '32px', height: '32px', background: '#000', borderRadius: '8px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{business?.name?.[0]}</div>
+                    <div style={{ fontWeight: 700 }}>{business?.name || 'MakSchichten'}</div>
+                   </div>
+                   {window.innerWidth < 768 && <X size={24} onClick={()=>setMobileMenu(false)} style={{ cursor: 'pointer' }} />}
                 </div>
                 <nav style={{ padding: '1rem', flexGrow: 1, overflowY: 'auto' }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#999', marginBottom: '1.5rem' }}>TEAM</div>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#999', marginBottom: '1.5rem', letterSpacing: '0.05em' }}>TEAM MANAGEMENT</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         {workers.map(w => (
-                            <div key={w.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: '#fff', border: '1px solid #eee', borderRadius: '12px' }}>
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: w.color }} />
+                            <div key={w.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: '#fff', border: '1px solid #eee', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: w.color }} />
+                                    <div>
                                         <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{w.name}</div>
+                                        <div style={{ fontSize: '0.65rem', color: '#999' }}>{calcHours(w.id).toFixed(1)}h / week</div>
                                     </div>
-                                    <div style={{ fontSize: '0.65rem', color: '#999' }}>{calcHours(w.id).toFixed(1)}h this week</div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '4px' }}>
                                     <Edit2 size={12} style={{ cursor: 'pointer', opacity: 0.3 }} onClick={()=>setEditW({...w})} />
@@ -198,34 +227,55 @@ const Calendar = () => {
                                 </div>
                             </div>
                         ))}
-                        <button onClick={()=>setEditW({name: '', color:'#e0f2fe'})} style={{ fontSize: '0.75rem', padding: '0.75rem', border: '1px dashed #ccc', borderRadius: '12px', color: '#999' }}>+ Add Worker</button>
+                        <button onClick={()=>setEditW({name: '', color:'#e0f2fe'})} style={{ width: '100%', fontSize: '0.75rem', padding: '0.75rem', border: '1px dashed #ccc', borderRadius: '12px', color: '#999', background: 'transparent' }}>+ Add Team Member</button>
                     </div>
                 </nav>
                 <div style={{ padding: '1rem', borderTop: '1px solid #eee', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <button onClick={importLegacy} style={{ fontSize: '0.7rem', color: '#3b82f6', border: '1px dashed #3b82f6', padding: '0.5rem', borderRadius: '8px', background: '#3b82f611' }}>Import Old Data</button>
-                    <button onClick={logout} style={{ fontSize: '0.85rem', padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#666' }}><LogOut size={16}/> Logout</button>
+                    <button onClick={importLegacy} style={{ fontSize: '0.7rem', color: '#3b82f6', border: '1px dashed #3b82f6', padding: '0.75rem', borderRadius: '12px', background: '#3b82f611', fontWeight: 600 }}>
+                        <DownloadCloud size={14} style={{ marginRight: '6px' }} /> Import Old Data
+                    </button>
+                    <button onClick={logout} style={{ fontSize: '0.85rem', padding: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#666' }}><LogOut size={16}/> Logout</button>
                 </div>
             </aside>
             <main style={DASHBOARD_UI_STYLE.main}>
-                <header style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <button onClick={()=>setSelectedWeek(addDays(selectedWeek, -7))}><ChevronLeft size={16}/></button>
-                        <span style={{ fontWeight: 600 }}>{format(wStart, 'MMM d')} - {format(addDays(wStart, 6), 'MMM d, yyyy')}</span>
-                        <button onClick={()=>setSelectedWeek(addDays(selectedWeek, 7))}><ChevronRight size={16}/></button>
+                <header style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        {window.innerWidth < 768 && <LayoutDashboard size={24} onClick={()=>setMobileMenu(true)} style={{ cursor: 'pointer', padding: '4px' }} />}
+                        <div style={{ display: 'flex', background: '#f1f5f9', padding: '0.2rem', borderRadius: '8px', alignItems: 'center' }}>
+                            <button style={{ padding: '0.2rem' }} onClick={()=>setSelectedWeek(addDays(selectedWeek, viewMode === '7' ? -7 : viewMode === '3' ? -3 : -1))}><ChevronLeft size={14}/></button>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0 0.5rem', whiteSpace: 'nowrap' }}>
+                                {format(days[0], 'd MMM')} - {format(days[days.length-1], 'd MMM')}
+                            </span>
+                            <button style={{ padding: '0.2rem' }} onClick={()=>setSelectedWeek(addDays(selectedWeek, viewMode === '7' ? 7 : viewMode === '3' ? 3 : 1))}><ChevronRight size={14}/></button>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <button onClick={exportPDF} style={{ border: '1px solid #eee', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.8rem' }}><Download size={14}/> PDF</button>
-                        <button onClick={()=>setModal({})} className="primary" style={{ padding: '0.5rem 1rem', borderRadius: '8px' }}>+ Assign</button>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                        <select 
+                            value={viewMode} 
+                            onChange={e=>setViewMode(e.target.value)} 
+                            style={{ padding: '0.35rem', fontSize: '0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0', width: 'auto', fontWeight: 600 }}
+                        >
+                            <option value="7">7 Days</option>
+                            <option value="3">3 Days</option>
+                            <option value="1">1 Day</option>
+                        </select>
+                        <button onClick={exportPDF} style={{ border: '1px solid #e2e8f0', padding: '0.4rem', borderRadius: '6px', color: '#64748b' }}><Download size={14}/></button>
+                        <button onClick={()=>setModal({})} className="primary" style={{ padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem' }}>+ Assign</button>
                     </div>
                 </header>
                 <div id="calendar-view" style={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flexGrow: 1 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${days.length}, 1fr)`, flexGrow: 1, minWidth: '100%' }}>
                         <DndContext sensors={sensors} onDragEnd={(e)=>{
                              const { active, over } = e
                              if(!over) return
                              const [dayIso, timeOffset] = over.id.split('_')
                              const s = shifts.find(x => x.id === active.id)
-                             if(s) updateShift(s.id, { start: new Date(new Date(dayIso).setHours(6, parseInt(timeOffset), 0)).toISOString() })
+                             if(s) {
+                                 const start = new Date(dayIso); start.setHours(6, parseInt(timeOffset), 0)
+                                 const duration = new Date(s.end) - new Date(s.start)
+                                 const end = new Date(start.getTime() + duration)
+                                 updateShift(s.id, { start: start.toISOString(), end: end.toISOString() })
+                             }
                         }}>
                             {days.map(d => (
                                 <DroppableCol key={d.toISOString()} day={d} hours={hours}>
@@ -274,11 +324,11 @@ const Calendar = () => {
                             <h3>{editW.id ? 'Edit Worker' : 'Add Worker'}</h3>
                             <input placeholder="Name" value={editW.name} onChange={e=>setEditW({...editW, name: e.target.value})} />
                             <HexColorPicker color={editW.color} onChange={c=>setEditW({...editW, color: c})} />
-                            <button className="primary" onClick={()=>{
+                            <button className="primary" style={{ width: '100%', padding: '0.75rem', borderRadius: '12px' }} onClick={()=>{
                                 if(editW.id) updateWorker(editW.id, editW)
-                                else actions.addWorker(editW)
+                                else addWorker(editW)
                                 setEditW(null)
-                            }}>Add</button>
+                            }}>{editW.id ? 'Save Changes' : 'Add Member'}</button>
                         </div>
                     </div>
                 )}
@@ -311,16 +361,24 @@ const DroppableCol = ({ day, hours, children }) => {
 const Shift = ({ s, w, top, h, del, edit }) => {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: s.id })
     const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 100 } : undefined
+    
+    const formatTime = (dateStr) => {
+        const d = new Date(dateStr)
+        return isNaN(d.getTime()) ? '--:--' : format(d, 'HH:mm')
+    }
+
     return (
-        <div ref={setNodeRef} style={{ position: 'absolute', top, height: h, left: 4, right: 4, background: w.color+'aa', borderRadius: '8px', padding: '8px', border: `1px solid ${w.color}`, ...style }} {...listeners} {...attributes}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                <b>{w.name}</b>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                    <Edit2 size={10} style={{ cursor: 'pointer', opacity: 0.5 }} onMouseDown={(e)=>{e.stopPropagation(); edit()}} />
-                    <X size={10} style={{ cursor: 'pointer', opacity: 0.5 }} onMouseDown={(e)=>{e.stopPropagation(); del()}} />
+        <div ref={setNodeRef} style={{ position: 'absolute', top, height: h, left: 4, right: 4, background: w.color+'aa', borderRadius: '10px', padding: '10px', border: `1px solid ${w.color}`, backdropFilter: 'blur(4px)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', ...style }} {...listeners} {...attributes}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
+                <b style={{ color: '#000', pointerEvents: 'none' }}>{w.name}</b>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                    <Edit2 size={14} style={{ cursor: 'pointer', color: '#000' }} onPointerDown={(e)=>{e.stopPropagation(); edit()}} />
+                    <X size={14} style={{ cursor: 'pointer', color: '#000' }} onPointerDown={(e)=>{e.stopPropagation(); del()}} />
                 </div>
             </div>
-            <div style={{ fontSize: '0.65rem' }}>{format(new Date(s.start), 'HH:mm')} - {format(new Date(s.end), 'HH:mm')}</div>
+            <div style={{ fontSize: '0.65rem', color: '#333', fontWeight: 700, pointerEvents: 'none' }}>
+                {formatTime(s.start)} - {formatTime(s.end)}
+            </div>
         </div>
     )
 }
