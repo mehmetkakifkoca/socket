@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap');
+
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', sans-serif;
+  
+  --bg-primary: #ffffff;
+  --bg-secondary: #fbfbfc;
+  --bg-tertiary: #f1f1f2;
+  
+  --text-primary: #111111;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  
+  --border-subtle: #f3f4f6;
+  --border-normal: #e5e7eb;
+  
+  --accent-primary: #000000;
+  --accent-hover: #1f2937;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  /* Pastel Colors for Workers */
+  --pastel-blue: #e0f2fe;
+  --pastel-green: #dcfce7;
+  --pastel-pink: #fce7f3;
+  --pastel-purple: #f3e8ff;
+  --pastel-orange: #ffedd5;
+  --pastel-yellow: #fef9c3;
+  --pastel-red: #fee2e2;
+  --pastel-indigo: #e0e7ff;
+}
+
+@media print {
+  body { background: #fff !important; }
+  .app-container { overflow: visible !important; height: auto !important; }
+  .sidebar { display: none !important; }
+  #calendar-view { width: 100% !important; margin: 0 !important; padding: 0 !important; }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+button.primary {
+  background: var(--accent-primary);
+  color: #ffffff;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.875rem;
+}
+
+button.primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+input, select {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-normal);
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: inherit;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+input:focus, select:focus {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+}
+
+.card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.sidebar {
+  width: 280px;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  height: 100vh;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.time-slot {
+  height: 60px;
+  border-bottom: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.time-label {
+  text-align: right;
+  padding-right: 8px;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  margin-top: -8px;
+}
+
+.app-container {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+.setup-screen {
+  background: var(--bg-secondary);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-normal);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: inherit;
+}
+
+select:focus {
+  border-color: var(--accent-primary);
+}
