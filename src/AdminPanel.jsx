@@ -24,6 +24,8 @@ const AdminPanel = () => {
     const unsubB = onValue(bRef, (snap) => {
       const data = snap.val()
       setBusinesses(data ? Object.entries(data).map(([id, v]) => ({ id, ...v })) : [])
+    }, (error) => {
+      alert("İşletmeler yüklenirken hata oluştu (Muhtemelen Firebase Veritabanı Kuralları 'Super Admin' okuma yetkisini engelliyor): " + error.message)
     })
     const sRef = ref(database, 'global_settings')
     const unsubS = onValue(sRef, (snap) => {
@@ -99,21 +101,21 @@ const AdminPanel = () => {
 
   const Navigation = () => (
     <>
-      <button onClick={() => {setTab('users'); setManagingBiz(null); setMobileMenu(false)}} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1rem', borderRadius: '12px', border: 'none', background: tab === 'users' ? '#f1f5f9' : 'transparent', color: tab === 'users' ? '#0f172a' : '#64748b', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}><Users size={18} /> Betriebe</button>
-      <button onClick={() => {setTab('settings'); setManagingBiz(null); setMobileMenu(false)}} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1rem', borderRadius: '12px', border: 'none', background: tab === 'settings' ? '#f1f5f9' : 'transparent', color: tab === 'settings' ? '#0f172a' : '#64748b', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}><Settings size={18} /> App Settings</button>
+      <button onClick={() => {setTab('users'); setManagingBiz(null); setMobileMenu(false)}} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1rem', borderRadius: '12px', border: 'none', background: tab === 'users' ? '#ecedf2' : 'transparent', color: tab === 'users' ? '#262626' : '#64748b', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}><Users size={18} /> Betriebe</button>
+      <button onClick={() => {setTab('settings'); setManagingBiz(null); setMobileMenu(false)}} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem 1rem', borderRadius: '12px', border: 'none', background: tab === 'settings' ? '#ecedf2' : 'transparent', color: tab === 'settings' ? '#262626' : '#64748b', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}><Settings size={18} /> App Settings</button>
       <button onClick={logout} style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.85rem', borderRadius: '12px', border: '1px solid #fee2e2', background: '#fef2f2', color: '#ef4444', fontWeight: 700, cursor: 'pointer' }}><LogOut size={16} /> Logout</button>
     </>
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100dvh', width: '100vw', background: '#f8fafc', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100dvh', width: '100vw', background: '#ecedf2', overflow: 'hidden' }}>
       
       {/* Sidebar (Desktop) */}
       {!isMobile && (
         <aside style={{ width: managingBiz ? '0' : '280px', transition: '0.3s', overflow: 'hidden', background: '#fff', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', padding: managingBiz ? '0' : '1.5rem' }}>
           <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{ width: '40px', height: '40px', background: '#7c3aed', borderRadius: '12px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Settings size={20} /></div>
-            <div style={{ fontWeight: 800, color: '#0f172a' }}>SUPER ADMIN</div>
+            <div style={{ width: '40px', height: '40px', background: '#f3b279', borderRadius: '12px', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Settings size={20} /></div>
+            <div style={{ fontWeight: 800, color: '#262626' }}>SUPER ADMIN</div>
           </div>
           <Navigation />
         </aside>
@@ -121,9 +123,9 @@ const AdminPanel = () => {
 
       {/* Mobile Top Bar */}
       {isMobile && !managingBiz && (
-          <header style={{ padding: '1rem', background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>SOCKET <span style={{ color: '#7c3aed' }}>ADMIN</span></div>
-              <button onClick={() => setMobileMenu(!mobileMenu)} style={{ background: 'none', border: 'none' }}><Menu size={24} /></button>
+          <header style={{ padding: '1rem', background: '#ffffff', borderBottom: '1px solid #dbdde3', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.02em', color: '#262626' }}>Rostr <span style={{ color: '#f3b279' }}>ADMIN</span></div>
+              <button onClick={() => setMobileMenu(!mobileMenu)} style={{ background: 'none', border: 'none', color: '#262626' }}><Menu size={24} /></button>
           </header>
       )}
 
@@ -142,42 +144,65 @@ const AdminPanel = () => {
           <div>
               {tab === 'users' ? (
                   <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                      <h2 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 900, marginBottom: '1.5rem' }}>İşyerleri & Yedekleme</h2>
+                      <h2 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 900, marginBottom: '1.5rem', color: '#262626' }}>Betriebe & Backup</h2>
                       
-                      {/* Yeni İşletme Formu */}
-                      <div className="card" style={{ padding: isMobile ? '1.25rem' : '1.5rem', marginBottom: '2rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '20px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Plus size={20} color="#7c3aed" /> Yeni İşletme</h3>
-                        <form onSubmit={handleCreateUser} style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1rem' }}>
-                          <input name="bizName" required placeholder="İşletme Adı" style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9rem' }} />
-                          <input name="username" required placeholder="Kullanıcı Adı" style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9rem' }} />
-                          <input name="password" required type="password" placeholder="Şifre" style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9rem' }} />
-                          <button className="primary" type="submit" style={{ padding: '0.85rem 1.5rem', borderRadius: '12px', fontWeight: 800 }}>Ekle</button>
+                      {/* Neuer Betrieb Formular */}
+                      <div className="card" style={{ padding: isMobile ? '1.25rem' : '1.5rem', marginBottom: '2rem', background: '#ffffff', border: '1px solid #dbdde3', borderRadius: '20px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#262626' }}><Plus size={20} color="#f3b279" /> Neuer Betrieb</h3>
+                        <form onSubmit={handleCreateUser} style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                          <input name="bizName" required placeholder="Name des Betriebs" style={{ flex: '1 1 200px', minWidth: '0', padding: '0.85rem', borderRadius: '12px', border: '1px solid #dbdde3', fontSize: '0.9rem', background: '#ecedf2' }} />
+                          <input name="username" required placeholder="Benutzername" style={{ flex: '1 1 200px', minWidth: '0', padding: '0.85rem', borderRadius: '12px', border: '1px solid #dbdde3', fontSize: '0.9rem', background: '#ecedf2' }} />
+                          <input name="password" required type="password" placeholder="Passwort" style={{ flex: '1 1 200px', minWidth: '0', padding: '0.85rem', borderRadius: '12px', border: '1px solid #dbdde3', fontSize: '0.9rem', background: '#ecedf2' }} />
+                          <button className="primary" type="submit" style={{ flex: isMobile ? '1 1 100%' : '1 1 auto', padding: '0.85rem 1.5rem', borderRadius: '12px', fontWeight: 800, background: '#f3b279', border: 'none', color: '#ffffff', cursor: 'pointer', whiteSpace: 'nowrap' }}>Hinzufügen</button>
                         </form>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 360px), 1fr))', gap: '1rem' }}>
                           {businesses.map(b => (
-                              <div key={b.id} className="card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.03)' }}>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                      <div>
-                                          <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#0f172a' }}>{b.name}</div>
-                                          <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>@{b.username}</div>
+                              <div key={b.id} className="card" style={{ background: '#ffffff', border: '1px solid #dbdde3', borderRadius: '24px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.03)' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                          {b.logoUrl ? (
+                                              <img src={b.logoUrl} alt="Logo" style={{ height: '40px', width: '40px', objectFit: 'contain', borderRadius: '8px', background: '#ecedf2' }} />
+                                          ) : (
+                                              <div style={{ width: '40px', height: '40px', background: '#ecedf2', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontWeight: 700 }}>{b.name.charAt(0)}</div>
+                                          )}
+                                          <div>
+                                              <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#262626' }}>{b.name}</div>
+                                              <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>@{b.username}</div>
+                                          </div>
                                       </div>
-                                      <button onClick={() => handleDeleteBiz(b.id)} style={{ padding: '8px', background: '#fef2f2', color: '#ef4444', border: 'none', borderRadius: '10px', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                      <button onClick={() => handleDeleteBiz(b.id)} style={{ padding: '8px', background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', borderRadius: '10px', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                   </div>
-                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                                      <button onClick={() => setManagingBiz(b)} style={{ gridColumn: 'span 2', padding: '0.85rem', borderRadius: '14px', background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                          <Users size={16} /> İşçileri Yönet
+                                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '0.5rem' }}>
+                                      <button onClick={() => setManagingBiz(b)} style={{ gridColumn: 'span 2', padding: '0.85rem', borderRadius: '14px', background: '#f3b279', color: '#ffffff', border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                          <Users size={16} /> Mitarbeiter verwalten
                                       </button>
-                                      <button onClick={() => handleExport(b)} style={{ padding: '0.75rem', borderRadius: '14px', background: '#f8fafc', border: '1px solid #e2e8f0', color: '#0ea5e9', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                                          <DownloadCloud size={16} /> Yedekle
-                                      </button>
+                                      
                                       <div style={{ position: 'relative' }}>
-                                        <button style={{ width: '100%', padding: '0.75rem', borderRadius: '14px', background: '#f8fafc', border: '1px solid #e2e8f0', color: '#10b981', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                                            <UploadCloud size={16} /> Geri Yükle
-                                        </button>
-                                        <input type="file" accept=".json" onChange={(e) => handleImport(b, e)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                                          <button style={{ width: '100%', padding: '0.75rem', borderRadius: '14px', background: '#ecedf2', border: 'none', color: '#262626', fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                              <UploadCloud size={16} color="#f3b279" /> Logo
+                                          </button>
+                                          <input type="file" accept="image/*" onChange={(e) => {
+                                              const file = e.target.files[0];
+                                              if (!file) return;
+                                              if (file.size > 1024 * 1024) { alert('Bild < 1MB!'); return; }
+                                              const reader = new FileReader();
+                                              reader.onload = async (ev) => {
+                                                  try {
+                                                      await update(ref(database, `businesses/${b.id}`), { logoUrl: ev.target.result });
+                                                      alert('Logo başarıyla güncellendi!');
+                                                  } catch (err) { 
+                                                      alert('Logo yüklenemedi! (Firebase Yetki Hatası olabilir): ' + err.message); 
+                                                  }
+                                              };
+                                              reader.readAsDataURL(file);
+                                          }} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
                                       </div>
+                                      
+                                      <button onClick={() => handleExport(b)} style={{ padding: '0.75rem', borderRadius: '14px', background: '#ecedf2', border: 'none', color: '#262626', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                          <DownloadCloud size={16} color="#f3b279" /> Backup
+                                      </button>
                                   </div>
                               </div>
                           ))}
@@ -185,14 +210,72 @@ const AdminPanel = () => {
                   </div>
               ) : (
                 <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '2rem' }}>App Settings</h2>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '2rem', color: '#262626' }}>App Einstellungen</h2>
+                    
                     <form onSubmit={handleSaveSettings} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div className="card" style={{ padding: '2rem', background: '#fff', borderRadius: '24px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div className="card" style={{ padding: '2rem', background: '#ffffff', borderRadius: '24px', border: '1px solid #dbdde3', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
+                            
+                            {/* Platform Name */}
                             <div>
-                                <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', display: 'block' }}>Platform Adı</label>
-                                <input value={globalSettings.appName} onChange={e => setGlobalSettings({...globalSettings, appName: e.target.value})} style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', border: '1px solid #e2e8f0' }} />
+                                <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', display: 'block', color: '#262626' }}>Plattform Name</label>
+                                <input value={globalSettings.appName || ''} onChange={e => setGlobalSettings({...globalSettings, appName: e.target.value})} style={{ width: '100%', padding: '0.85rem', borderRadius: '12px', border: '1px solid #dbdde3', background: '#ecedf2' }} />
                             </div>
-                            <button className="primary" type="submit" style={{ padding: '1rem', borderRadius: '12px', fontWeight: 800 }}>Değişiklikleri Kaydet</button>
+                            
+                            {/* Platform Haupt-Logo */}
+                            <div>
+                                <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', display: 'block', color: '#262626' }}>Plattform Logo (Zentrales Logo)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                    {globalSettings.logoUrl ? (
+                                        <img src={globalSettings.logoUrl} alt="Global Logo" style={{ height: '40px', objectFit: 'contain', background: '#ecedf2', borderRadius: '8px', padding: '4px' }} />
+                                    ) : (
+                                        <div style={{ padding: '10px 14px', background: '#ecedf2', borderRadius: '8px', fontSize: '0.8rem', color: '#94a3b8' }}>Kein Logo</div>
+                                    )}
+                                    <div style={{ position: 'relative' }}>
+                                        <button type="button" style={{ padding: '0.75rem 1.25rem', borderRadius: '12px', background: '#f3b279', border: 'none', color: '#ffffff', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                            <UploadCloud size={16} /> Neues Logo hochladen
+                                        </button>
+                                        <input type="file" accept="image/*" onChange={(e) => {
+                                              const file = e.target.files[0];
+                                              if (!file) return;
+                                              if (file.size > 1024 * 1024) { alert('Bild < 1MB!'); return; }
+                                              const reader = new FileReader();
+                                              reader.onload = (ev) => {
+                                                  setGlobalSettings({...globalSettings, logoUrl: ev.target.result});
+                                              };
+                                              reader.readAsDataURL(file);
+                                          }} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Platform Favicon */}
+                            <div>
+                                <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', display: 'block', color: '#262626' }}>Plattform Favicon (Browser Icon)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                    {globalSettings.faviconUrl ? (
+                                        <img src={globalSettings.faviconUrl} alt="Favicon" style={{ height: '32px', width: '32px', objectFit: 'contain', background: '#ecedf2', borderRadius: '8px', padding: '4px' }} />
+                                    ) : (
+                                        <div style={{ padding: '8px', background: '#ecedf2', borderRadius: '8px', fontSize: '0.8rem', color: '#94a3b8' }}>N/A</div>
+                                    )}
+                                    <div style={{ position: 'relative' }}>
+                                        <button type="button" style={{ padding: '0.75rem 1.25rem', borderRadius: '12px', background: '#ecedf2', border: 'none', color: '#262626', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                            <UploadCloud size={16} color="#f3b279" /> Favicon hochladen
+                                        </button>
+                                        <input type="file" accept="image/*" onChange={(e) => {
+                                              const file = e.target.files[0];
+                                              if (!file) return;
+                                              if (file.size > 1024 * 1024) { alert('Bild < 1MB!'); return; }
+                                              const reader = new FileReader();
+                                              reader.onload = (ev) => {
+                                                  setGlobalSettings({...globalSettings, faviconUrl: ev.target.result});
+                                              };
+                                              reader.readAsDataURL(file);
+                                          }} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button className="primary" type="submit" style={{ padding: '1rem', borderRadius: '12px', fontWeight: 800, background: '#f3b279', border: 'none', color: '#ffffff', cursor: 'pointer', marginTop: '1rem' }}>Änderungen speichern</button>
                         </div>
                     </form>
                 </div>
@@ -200,27 +283,28 @@ const AdminPanel = () => {
           </div>
         ) : (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ padding: '1.5rem', background: '#fff', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <button onClick={() => setManagingBiz(null)} style={{ padding: '0.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', background: 'none' }}><ChevronLeft size={24}/></button>
-                  <div style={{ fontWeight: 900, fontSize: '1.1rem' }}>{managingBiz.name} İşçileri</div>
+              <div style={{ padding: '1.5rem', background: '#ffffff', borderBottom: '1px solid #dbdde3', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <button onClick={() => setManagingBiz(null)} style={{ padding: '0.5rem', borderRadius: '12px', border: '1px solid #dbdde3', background: '#ecedf2', cursor: 'pointer', color: '#262626' }}><ChevronLeft size={24}/></button>
+                  <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#262626' }}>{managingBiz.name} Mitarbeiter</div>
               </div>
               <div style={{ flexGrow: 1, padding: isMobile ? '1rem' : '2rem', overflowY: 'auto' }}>
                   <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {workerList.length === 0 && <div style={{ fontSize: '0.9rem', color: '#64748b', textAlign: 'center', padding: '2rem' }}>Keine Mitarbeiter vorhanden.</div>}
                       {workerList.map(w => (
-                          <div key={w.id} style={{ background: '#fff', padding: '1.25rem', borderRadius: '20px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1rem', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between' }}>
+                          <div key={w.id} style={{ background: '#ffffff', padding: '1.25rem', borderRadius: '20px', border: '1px solid #dbdde3', display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1rem', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                  <div style={{ width: '45px', height: '45px', borderRadius: '14px', background: w.color || '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#fff' }}>{w.name?.charAt(0)}</div>
+                                  <div style={{ width: '45px', height: '45px', borderRadius: '14px', background: w.color || '#ecedf2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: w.color ? '#ffffff' : '#262626' }}>{w.name?.charAt(0)}</div>
                                   <div>
-                                      <div style={{ fontWeight: 800 }}>{w.name}</div>
+                                      <div style={{ fontWeight: 800, color: '#262626' }}>{w.name}</div>
                                       <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>ID: {w.id}</div>
                                   </div>
                               </div>
                               <div style={{ display: 'flex', gap: '0.5rem', width: isMobile ? '100%' : 'auto' }}>
                                   <button onClick={() => {
-                                      const newName = window.prompt('Yeni isim:', w.name);
+                                      const newName = window.prompt('Neuer Name:', w.name);
                                       if(newName) update(ref(database, `businesses/${managingBiz.id}/workers/${w.id}`), { name: newName });
-                                  }} style={{ flex: 1, padding: '0.6rem 1rem', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#fff', fontWeight: 700, fontSize: '0.85rem' }}><Edit2 size={14}/> Edit</button>
-                                  <button onClick={() => alert('Şifre sıfırlama için işçiyi silip tekrar ekleyin.')} style={{ flex: 1, padding: '0.6rem 1rem', borderRadius: '10px', border: '1px solid #fee2e2', background: '#fef2f2', color: '#ef4444', fontWeight: 700, fontSize: '0.85rem' }}><Key size={14}/> Pass</button>
+                                  }} style={{ flex: 1, padding: '0.6rem 1rem', borderRadius: '10px', border: '1px solid #dbdde3', background: '#ecedf2', fontWeight: 700, fontSize: '0.85rem', color: '#262626', cursor: 'pointer' }}><Edit2 size={14}/> Bearbeiten</button>
+                                  <button onClick={() => alert('Für Passwort-Reset bitte den Mitarbeiter im Business-Dashboard löschen und neu anlegen.')} style={{ flex: 1, padding: '0.6rem 1rem', borderRadius: '10px', border: '1px solid #fecaca', background: '#fef2f2', color: '#ef4444', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}><Key size={14}/> Reset</button>
                               </div>
                           </div>
                       ))}
